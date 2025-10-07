@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: longcat_bot
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pg:/var/lib/postgresql/data
+    networks:
+      - botnet
+
+  bot:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - botnet
+
+volumes:
+  pg: {}
+
+networks:
+  botnet:

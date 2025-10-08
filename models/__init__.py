@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, BigInteger, Text, String
+from sqlalchemy import Column, Integer, BigInteger, Text, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime, timedelta
 
 Base = declarative_base()
 
@@ -15,3 +16,4 @@ class ApiKey(Base):
     id = Column(Integer, primary_key=True)
     key = Column(String(255), nullable=False, unique=True)
     is_active = Column(Integer, default=1)
+    blocked_until = Column(DateTime, nullable=True)  # ← НОВОЕ ПОЛЕ

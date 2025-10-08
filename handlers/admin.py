@@ -42,8 +42,11 @@ async def add_key_process(message: Message, state: FSMContext, session: AsyncSes
         await message.answer("Ключ слишком короткий. Попробуйте снова или нажмите 'Отмена'.")
         return
 
-    existing = await session.execute(select(ApiKey).where(ApiKey.key == key))
-    if existing.scalar_one_or_none():
+    # 🔥 ИСПРАВЛЕНО: безопасная проверка
+    result = await session.execute(select(ApiKey).where(ApiKey.key == key))
+    existing = result.scalars().first()
+
+    if existing:
         await message.answer("Ключ уже существует.")
     else:
         session.add(ApiKey(key=key, is_active=1))
@@ -57,7 +60,7 @@ async def delete_key_start(message: Message, state: FSMContext, session: AsyncSe
     if message.from_user.id != ADMIN_USER_ID:
         return
 
-    # Получаем все ключи
+    # Получаем ВСЕ ключи (активные и заблокированные)
     result = await session.execute(select(ApiKey))
     keys = result.scalars().all()
 
@@ -65,9 +68,10 @@ async def delete_key_start(message: Message, state: FSMContext, session: AsyncSe
         await message.answer("Нет сохранённых API-ключей.", reply_markup=get_main_keyboard(message.from_user.id))
         return
 
-    # Показываем inline-клавиатуру с выбором
     await message.answer(
-        "Выберите ключ для удаления:",
+        "Выберите ключ для удаления:\n"
+        "✅ — активен\n"
+        "🔴 — заблокирован (лимит исчерпан)",
         reply_markup=get_delete_key_keyboard(keys)
     )
     await state.set_state(DeleteKey.waiting_for_selection)
